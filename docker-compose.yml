@@ -9,13 +9,15 @@ services:
     container_name: estoque-wpp-postgres
     environment:
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: postgres
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./postgres/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql
-    ports:
-      - "5432:5432"
+    # Sem "ports" aqui de propósito: o Postgres NÃO precisa ficar exposto
+    # na porta do host. A API já conversa com ele por dentro da rede
+    # estoque-network, pelo nome do serviço (postgres:5432).
+    # Foi isso que causou o erro "port is already allocated".
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 10s
@@ -37,12 +39,10 @@ services:
       ADMIN_TOKEN: ${ADMIN_TOKEN:-admin-token-change-in-production}
       GROQ_API_KEY_1: ${GROQ_API_KEY_1:-}
       GROQ_API_KEY_2: ${GROQ_API_KEY_2:-}
-      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/postgres
+      DATABASE_URL: postgresql://postgres:${POSTGRES_PASSWORD}@postgres:5432/postgres
       BAILEYS_URL: http://baileys:3000
       API_BASE_URL: http://api:8000
       API_WEBHOOK_URL: http://baileys:3000/webhook/mensagem
-    ports:
-      - "8000:8000"
     depends_on:
       postgres:
         condition: service_healthy
@@ -52,6 +52,10 @@ services:
     networks:
       - estoque-network
     command: uvicorn app:app --host 0.0.0.0 --port 8000 --reload
+    # Sem "ports" publicada pro host: quem fala com a API de fora é o
+    # nginx (reverse proxy). Se quiser debug direto em api.seudominio.com,
+    # cria um Domain apontando pro serviço "api", porta 8000, no Dokploy —
+    # não precisa reabrir porta aqui pra isso.
 
   # ═════════════════════════════════════════
   # BAILEYS — WhatsApp (Node.js)
@@ -65,8 +69,6 @@ services:
       API_BASE_URL: http://api:8000
       API_WEBHOOK_URL: http://api:8000/webhook/mensagem
       NODE_ENV: production
-    ports:
-      - "3000:3000"
     depends_on:
       - api
     volumes:
@@ -76,6 +78,7 @@ services:
     networks:
       - estoque-network
     command: node index.js
+    # Idem: sem porta publicada. Fala com a API por dentro da rede.
 
   # ═════════════════════════════════════════
   # NGINX — frontend + reverse proxy

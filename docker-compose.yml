@@ -24,6 +24,7 @@ services:
       - ./api/requirements.txt:/app/requirements.txt
     networks:
       - estoque-network
+      - dokploy-network
     command: uvicorn app:app --host 0.0.0.0 --port 8000 --reload
     # Sem "ports" publicada: quem fala com a API de fora e o nginx.
 
@@ -47,6 +48,7 @@ services:
       - baileys_auth:/app/auth_info_estoque
     networks:
       - estoque-network
+      - dokploy-network
     command: node index.js
 
   # ═════════════════════════════════════════

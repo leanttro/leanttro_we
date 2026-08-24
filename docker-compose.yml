@@ -63,7 +63,13 @@ services:
       - baileys
     networks:
       - estoque-network
-      - dokploy-network   # <-- ESSENCIAL: sem isso o Traefik não enxerga o container (era a causa do 404)
+      - dokploy-network   # <-- ESSENCIAL: sem isso o Traefik não enxerga o container
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.wpp-nginx.rule=Host(`wpp.leanttro.com`)"
+      - "traefik.http.routers.wpp-nginx.entrypoints=websecure"
+      - "traefik.http.routers.wpp-nginx.tls.certresolver=letsencrypt"
+      - "traefik.http.services.wpp-nginx.loadbalancer.server.port=80"
     healthcheck:
       test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/"]
       interval: 10s

@@ -3,12 +3,11 @@ version: '3.8'
 services:
   # ═════════════════════════════════════════
   # FASTAPI — backend (Python)
-  # Usa Postgres EXTERNO (já existente), não sobe banco no compose.
   # ═════════════════════════════════════════
   api:
     build:
-      context: ./api
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: Dockerfile.api
     container_name: estoque-wpp-api
     environment:
       SECRET_KEY: ${SECRET_KEY:-your-secret-key-change-in-production}
@@ -24,17 +23,16 @@ services:
       - ./api/requirements.txt:/app/requirements.txt
     networks:
       - estoque-network
-      - dokploy-network
     command: uvicorn app:app --host 0.0.0.0 --port 8000 --reload
-    # Sem "ports" publicada: quem fala com a API de fora e o nginx.
+    # Sem "ports" publicada: quem fala com a API de fora é o nginx.
 
   # ═════════════════════════════════════════
   # BAILEYS — WhatsApp (Node.js)
   # ═════════════════════════════════════════
   baileys:
     build:
-      context: ./baileys
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: Dockerfile.baileys
     container_name: estoque-wpp-baileys
     environment:
       API_BASE_URL: http://api:8000
@@ -48,27 +46,24 @@ services:
       - baileys_auth:/app/auth_info_estoque
     networks:
       - estoque-network
-      - dokploy-network
     command: node index.js
 
   # ═════════════════════════════════════════
   # NGINX — frontend + reverse proxy
   # ═════════════════════════════════════════
   nginx:
-    image: nginx:alpine
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
     container_name: estoque-wpp-nginx
     expose:
       - "80"
-    volumes:
-      - ./frontend:/usr/share/nginx/html
-      - ./nginx.conf:/etc/nginx/nginx.conf:ro
-      - nginx_certs:/etc/nginx/certs
     depends_on:
       - api
       - baileys
     networks:
       - estoque-network
-      - dokploy-network
+      - dokploy-network   # <-- ESSENCIAL: sem isso o Traefik não enxerga o container (era a causa do 404)
     healthcheck:
       test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/"]
       interval: 10s
@@ -77,8 +72,6 @@ services:
 
 volumes:
   baileys_auth:
-    driver: local
-  nginx_certs:
     driver: local
 
 networks:

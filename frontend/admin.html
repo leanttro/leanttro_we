@@ -410,7 +410,7 @@
     <div class="toast" id="toast"></div>
 
     <script>
-        const API_URL = 'http://localhost:8000';
+        const API_URL = '';
         const adminToken = localStorage.getItem('admin_token');
 
         if (!adminToken) {
@@ -664,7 +664,18 @@
         }
 
         async function verQrCode() {
-            window.open(`${API_URL.replace('8000', '3000')}/qrcode`, '_blank');
+            try {
+                const res = await apiFetch('/whatsapp/qrcode');
+                const data = await res.json();
+                if (!data.qr) {
+                    showToast('QR Code ainda não disponível. Tente novamente em alguns segundos.', true);
+                    return;
+                }
+                const win = window.open('', '_blank');
+                win.document.write(`<img src="${data.qr}" style="max-width:100%">`);
+            } catch (err) {
+                showToast('Erro ao buscar QR Code: ' + err.message, true);
+            }
         }
 
         async function resetarConexao() {

@@ -55,9 +55,8 @@ services:
   nginx:
     image: nginx:alpine
     container_name: estoque-wpp-nginx
-    ports:
-      - "80:80"
-      - "443:443"
+    expose:
+      - "80"
     volumes:
       - ./frontend:/usr/share/nginx/html
       - ./nginx.conf:/etc/nginx/nginx.conf:ro

@@ -1,0 +1,21 @@
+{
+  "name": "estoque-wpp-baileys",
+  "version": "1.0.0",
+  "description": "Conector WhatsApp (Baileys) para o Gerenciador de Estoque via WhatsApp",
+  "main": "index.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "@whiskeysockets/baileys": "^6.7.9",
+    "express": "^4.19.2",
+    "axios": "^1.7.7",
+    "qrcode": "^1.5.4",
+    "pino": "^9.4.0",
+    "dotenv": "^16.4.5"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
